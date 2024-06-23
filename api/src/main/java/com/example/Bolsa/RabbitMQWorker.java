@@ -83,14 +83,12 @@ public class RabbitMQWorker {
                                     logger.info("Não foi possível realizar a venda neste momento.");
                                 }
                             }
-                            if (sucesso) {
                                 String mensagem = usuarioService.processarMudancaAtivo(livroDeOfertas);
                                 for (Usuario usuario : usuarioRepository.findAllWithAtivosAcompanhados()) {
                                     if (usuario.getAtivosAcompanhados().stream().anyMatch(ua -> ua.getAtivo().equals(livroDeOfertas.getAtivo()))) {
                                         channel.basicPublish(EXCHANGE_NAME, livroDeOfertas.getAtivo().toString(), null, mensagem.getBytes());
                                         notificacaoController.notifyUsers(livroDeOfertas.getAtivo().toString(), mensagem);
 
-                                        // Armazenar notificação no banco de dados para usuários offline
                                         Notificacao notificacao = new Notificacao();
                                         notificacao.setUsuarioId(usuario.getId());
                                         notificacao.setMensagem(mensagem);
@@ -99,7 +97,6 @@ public class RabbitMQWorker {
                                         logger.info("Mensagem enviada para o tópico {}: {}", livroDeOfertas.getAtivo().toString(), mensagem);
                                     }
                                 }
-                            }
                         } else {
                             logger.warn("livroDeOfertas é nulo. Ignorando mensagem.");
                         }
